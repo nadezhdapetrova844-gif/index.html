@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Достижения ЭКОГЕРОЕВ</title>
+<style>
+  @font-face {
+    font-family: 'Benzin-Bold';
+    src: url('Benzin-Bold.woff2') format('woff2'),
+         url('Benzin-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+  }
+
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #FFFFFF;
+    margin: 0;
+    padding: 20px;
+    color: #184B00;
+  }
+
+  h1 {
+    text-align: center;
+    font-family: 'Benzin-Bold', sans-serif;
+    color: #6CAD2E;
+    font-size: 36px;
+    margin-bottom: 20px;
+  }
+
+  #achievementForm {
+    max-width: 700px;
+    margin: 0 auto 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  #achievementForm input, #achievementForm select {
+    flex: 1 1 200px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #184B00;
+    font-size: 16px;
+  }
+
+  #achievementForm button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: #E5097F;
+    color: #FFFFFF;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  #achievementForm button:hover {
+    background-color: #6CAD2E;
+  }
+
+  #wall {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .card {
+    padding: 15px;
+    border-radius: 10px;
+    color: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+    word-wrap: break-word;
+    position: relative;
+  }
+
+  .card:hover {
+    transform: scale(1.03);
+  }
+
+  .card .author {
+    font-size: 12px;
+    margin-top: 10px;
+    text-align: right;
+  }
+
+  .reactions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .reaction-animation {
+    position: absolute;
+    font-size: 24px;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+  }
+
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    50% { transform: translateY(-30px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
+  }
+
+  /* Категории */
+  .NewDistance { background-color: #6CAD2E; }
+  .ImprovedTime { background-color: #E5097F; }
+  .NewActivity { background-color: #184B00; }
+
+</style>
+</head>
+<body>
+
+<h1>Достижения ЭКОГЕРОЕВ</h1>
+
+<div id="achievementForm">
+  <input type="text" id="achievementInput" placeholder="Ваше достижение..." />
+  <input type="text" id="authorInput" placeholder="Ваше имя..." />
+  <select id="categoryInput">
+    <option value="NewDistance">Новая дистанция</option>
+    <option value="ImprovedTime">Улучшил время</option>
+    <option value="NewActivity">Новый вид занятий</option>
+  </select>
+  <input type="text" id="emojiInput" placeholder="Эмодзи (необязательно)" />
+  <button onclick="addAchievement()">Добавить</button>
+</div>
+
+<div id="wall"></div>
+
+<script>
+  const wall = document.getElementById('wall');
+  let achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+
+  function saveAchievements() {
+    localStorage.setItem('achievements', JSON.stringify(achievements));
+  }
+
+  function renderWall() {
+    wall.innerHTML = '';
+    achievements.slice().reverse().forEach((a, index) => {
+      const card = document.createElement('div');
+      card.className = `card ${a.category}`;
+      const emoji = a.emoji ? a.emoji + ' ' : '';
+
+      card.innerHTML = `
+        <div class="text">${emoji}${a.text}</div>
+        <div class="author">— ${a.author}</div>
+        <div class="reactions">
+          <span onclick="addReaction(${achievements.length - 1 - index}, 'like', this)">👍 ${a.likes || 0}</span>
+          <span onclick="addReaction(${achievements.length - 1 - index}, 'love', this)">❤️ ${a.love || 0}</span>
+          <span onclick="addReaction(${achievements.length - 1 - index}, 'wow', this)">🎉 ${a.wow || 0}</span>
+        </div>
+      `;
+      wall.appendChild(card);
+    });
+  }
+
+  function addAchievement() {
+    const text = document.getElementById('achievementInput').value.trim();
+    const author = document.getElementById('authorInput').value.trim() || 'Аноним';
+    const category = document.getElementById('categoryInput').value;
+    const emoji = document.getElementById('emojiInput').value.trim();
+
+    if (!text) return;
+
+    achievements.push({ text, author, category, emoji, likes: 0, love: 0, wow: 0 });
+    saveAchievements();
+
+    document.getElementById('achievementInput').value = '';
+    document.getElementById('authorInput').value = '';
+    document.getElementById('emojiInput').value = '';
+    renderWall();
+  }
+
+  function addReaction(index, type, element) {
+    if (type === 'like') achievements[index].likes = (achievements[index].likes || 0) + 1;
+    if (type === 'love') achievements[index].love = (achievements[index].love || 0) + 1;
+    if (type === 'wow') achievements[index].wow = (achievements[index].wow || 0) + 1;
+    saveAchievements();
+    renderWall();
+
+    // Анимация стикера
+    const rect = element.getBoundingClientRect();
+    const emoji = type === 'like' ? '👍' : type === 'love' ? '❤️' : '🎉';
+    const anim = document.createElement('div');
+    anim.className = 'reaction-animation';
+    anim.style.left = rect.left + rect.width/2 + 'px';
+    anim.style.top = rect.top + 'px';
+    anim.textContent = emoji;
+    document.body.appendChild(anim);
+    setTimeout(() => anim.remove(), 1000);
+  }
+
+  renderWall();
+</script>
+
+</body>
+</html>
